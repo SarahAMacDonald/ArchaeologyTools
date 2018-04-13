@@ -1,0 +1,96 @@
+#********************************************************************************************************************
+# Name:              Survey References Cited
+# Created:           4/12/2018
+# Version:           ArcGIS 10.4.1
+# Author:            Sarah MacDonald
+# Description:       This script will extract information in the
+#                    Cultural_Survey attribute
+#                    table to help create a References Cited list for a
+#                    specific project area.
+#*********************************************************************************************************************
+# import modules
+import arcpy
+
+import sys, string, os, arcpy, traceback, datetime
+
+#import from an imported module
+from arcpy import env
+# Current time stamp
+RightNow = datetime.datetime.now()
+
+
+
+
+
+#***********************************************************************
+# section title
+#***********************************************************************
+RightNow = datetime.datetime.now()
+
+#remember this verbose error catcher.  Error messaging makes it invaluable.
+try:
+ 
+  #Set the environments for all of the processes to be run in the script.
+  env.overwriteOutput = "True"
+  env.workspace = #enter workspace location
+  
+  # Script arguments
+  Expression = arcpy.GetParameterAsText(1) #note that the number in ( ) must be in the order of input in the tool.
+  
+  #Variables
+  in_feature_class = arcpy.GetParameterAsText(0)
+  Project_Area = #enter output
+    #note that a shapefile needs to be declared with a '.shp' at the end
+  Reference_Source = #enter feature class with the references cited data you wish to extract
+  out_feature_class = arcpy.GetParameterAsText(2)
+  
+  #Select Process
+  arcpy.Select_analysis(in_feature_class, Project_Area, Expression)
+  arcpy.AddMessage("Project area selected") #print doesn't work
+  
+  #Clip Process
+  arcpy.Clip_analysis(Reference_Source, Project_Area, out_feature_class)
+  arcpy.AddMessage("Clip complete")
+  
+  #Extract the values from fields in out_feature_class and print the values as a reference
+  with arcpy.da.SearchCursor(out_feature_class, ['DOC_', 'AGENCY_', 'REPORT_TTL', 'AUTHOR']) as cursor:
+    for row in cursor:
+        # Access and print the row values by index position.
+        #   DOC_: row[0]
+        #   AGENCY_: row[1]
+        #   REPORT_TTL: row[2]
+        #   AUTHOR: row[3]
+        arcpy.AddMessage('''{} \n {} (BLM# {}; OAHP# {}). Submitted to the Bureau of Land
+                         Management White River Field Office. Copies available
+                         at the Bureau of Land Management White River Field
+                         Office.'''.format(row[3], row[2], row[1], row[0]))
+  
+  
+
+except:
+#imported modules produce error messaging from both ArcPy and Python.
+  import sys, traceback #if needed
+  # Get the traceback object
+  tb = sys.exc_info()[2]
+  tbinfo = traceback.format_tb(tb)[0]
+  # Concatenate information together concerning the error into a message string
+  pymsg = "PYTHON ERRORS:\nTraceback info:\n" + tbinfo + "\nError Info:\n" + str(sys.exc_info()[1])
+  msgs = "ArcPy ERRORS:\n" + arcpy.GetMessages(2) + "\n"
+  # Return python error messages for use in script tool or Python Window
+  arcpy.AddError(pymsg)
+  arcpy.AddError(msgs)
+  # Print Python error messages for use in Python / Python Window
+  arcpy.AddMessage(pymsg + "\n")
+  arcpy.AddMessage(msgs)
+
+#***********************************************************************
+# Time Finish up
+#***********************************************************************
+endtime = datetime.datetime.now()
+elapsed = endtime - RightNow  # this is a timedelta object in days and seconds
+days, seconds = elapsed.days, elapsed.seconds
+hours = seconds // 3600
+minutes = (seconds % 3600) // 60
+seconds = seconds % 60
+print "\nThat took {} days, {} hours, {} minutes, {} seconds".format(days, hours, minutes, seconds)
+#***********************************************************************
